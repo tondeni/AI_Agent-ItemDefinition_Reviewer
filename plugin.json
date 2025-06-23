@@ -1,0 +1,5 @@
+{
+  "name": "ISO 26262 Item Definition Reviewer",
+  "version": "0.1",
+  "description": "Review Item Definition based on a presaved checklists review for ISO 26262 Item Definition reviews"
+}
