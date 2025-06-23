@@ -1,0 +1,224 @@
+{
+  "checklist_id": "ISO26262_Item_Definition_Review",
+  "standard": "ISO 26262 Part 3",
+  "phase": "Concept Phase",
+  "items": [
+    {
+      "id": "ITEM_001",
+      "category": "Identification and Classification",
+      "requirement": "Unique Identification of the Item",
+      "description": "The item shall be uniquely identified in the system architecture or documentation.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.2"
+    },
+    {
+      "id": "ITEM_002",
+      "category": "Identification and Classification",
+      "requirement": "Define Item Type",
+      "description": "The type of the item (e.g., hardware component, software module, function) shall be clearly defined.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1"
+    },
+    {
+      "id": "ITEM_003",
+      "category": "Identification and Classification",
+      "requirement": "ASIL Decomposition Justification",
+      "description": "If applicable, the ASIL level assigned to the item shall be justified through decomposition from the system-level ASIL.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.4"
+    },
+    {
+      "id": "ITEM_004",
+      "category": "Identification and Classification",
+      "requirement": "Traceability of Safety Requirements",
+      "description": "Safety requirements relevant to the item shall be traceable from safety goals.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.e"
+    },
+    {
+      "id": "ITEM_005",
+      "category": "Identification and Classification",
+      "requirement": "Version Control Application",
+      "description": "A version control system shall be applied to manage changes to the item definition.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.5.1"
+    },
+    {
+      "id": "ITEM_006",
+      "category": "Identification and Classification",
+      "requirement": "Scope Definition",
+      "description": "The scope of the item shall be clearly defined, including what is included and excluded.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.7"
+    },
+    {
+      "id": "ITEM_007",
+      "category": "Functional Description",
+      "requirement": "Functionality Description",
+      "description": "The functionality of the item shall be described clearly and unambiguously.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.b"
+    },
+    {
+      "id": "ITEM_008",
+      "category": "Functional Description",
+      "requirement": "Interface Specification",
+      "description": "All interfaces (inputs, outputs) shall be clearly defined, including data types, ranges, and timing constraints.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.2.d-f"
+    },
+    {
+      "id": "ITEM_009",
+      "category": "Functional Description",
+      "requirement": "Behavior Under All Conditions",
+      "description": "The behavior of the item under all operating conditions, including fault conditions, shall be described.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.b"
+    },
+    {
+      "id": "ITEM_010",
+      "category": "Functional Description",
+      "requirement": "Error Handling Description",
+      "description": "The error handling mechanisms of the item shall be described.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.e"
+    },
+    {
+      "id": "ITEM_011",
+      "category": "Functional Description",
+      "requirement": "Operational Mode Specification",
+      "description": "Operational modes (normal, degraded, fault, startup, etc.) shall be specified.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.b"
+    },
+    {
+      "id": "ITEM_012",
+      "category": "Functional Description",
+      "requirement": "Temporal Aspects Definition",
+      "description": "Timing constraints such as latency, jitter, and deadlines shall be clearly stated where relevant.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.c"
+    },
+    {
+      "id": "ITEM_013",
+      "category": "Functional Description",
+      "requirement": "Performance Requirements",
+      "description": "Performance requirements such as response time and accuracy shall be defined.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.c"
+    },
+    {
+      "id": "ITEM_014",
+      "category": "Safety-Related Attributes",
+      "requirement": "Linking Safety Goals",
+      "description": "Safety goals relevant to the item shall be clearly stated.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.e"
+    },
+    {
+      "id": "ITEM_015",
+      "category": "Safety-Related Attributes",
+      "requirement": "Identification of Safety Mechanisms",
+      "description": "Safety mechanisms implemented in the item shall be identified and described.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.e"
+    },
+    {
+      "id": "ITEM_016",
+      "category": "Safety-Related Attributes",
+      "requirement": "Fault Tolerance Capability",
+      "description": "The item's fault tolerance capability shall be described if applicable.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.e"
+    },
+    {
+      "id": "ITEM_017",
+      "category": "Safety-Related Attributes",
+      "requirement": "Diagnostic Coverage Definition",
+      "description": "Diagnostic coverage for the item shall be defined and justified if applicable.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.e"
+    },
+    {
+      "id": "ITEM_018",
+      "category": "Safety-Related Attributes",
+      "requirement": "Hazard Mitigation Strategy",
+      "description": "Mitigation strategies for identified hazards shall be linked to this item.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.e"
+    },
+    {
+      "id": "ITEM_019",
+      "category": "Safety-Related Attributes",
+      "requirement": "Safe State Behavior",
+      "description": "The safe state or fallback behavior of the item in case of failure shall be defined.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.e"
+    },
+    {
+      "id": "ITEM_020",
+      "category": "Dependencies and Interactions",
+      "requirement": "Dependency Identification",
+      "description": "All dependencies on other items shall be clearly identified.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.2.d-f"
+    },
+    {
+      "id": "ITEM_021",
+      "category": "Dependencies and Interactions",
+      "requirement": "Interaction Description",
+      "description": "All interactions with other items shall be clearly described.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.2.d-f"
+    },
+    {
+      "id": "ITEM_022",
+      "category": "Dependencies and Interactions",
+      "requirement": "External Influences Consideration",
+      "description": "External influences such as driver inputs and environmental factors shall be considered and documented.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.d"
+    },
+    {
+      "id": "ITEM_023",
+      "category": "Dependencies and Interactions",
+      "requirement": "Assumptions Documentation",
+      "description": "Assumptions made about the environment, usage, or other systems shall be clearly stated.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.2.b"
+    },
+    {
+      "id": "ITEM_024",
+      "category": "System Boundaries and Context",
+      "requirement": "System Boundaries Definition",
+      "description": "Physical and logical boundaries of the item shall be clearly defined.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.2.a"
+    },
+    {
+      "id": "ITEM_025",
+      "category": "System Boundaries and Context",
+      "requirement": "Interaction with Non-Safety Systems",
+      "description": "Interactions with non-safety-related systems shall be documented.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.2.f"
+    },
+    {
+      "id": "ITEM_026",
+      "category": "System Boundaries and Context",
+      "requirement": "Environmental Condition Consideration",
+      "description": "Environmental conditions such as temperature, vibration, EMC, etc., shall be considered and documented.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.d"
+    },
+    {
+      "id": "ITEM_027",
+      "category": "System Boundaries and Context",
+      "requirement": "Design Constraints Statement",
+      "description": "Design constraints (hardware, software, regulatory, etc.) shall be stated.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.4.1.d"
+    },
+    {
+      "id": "ITEM_028",
+      "category": "Review and Approval",
+      "requirement": "Formal Review Process Followed",
+      "description": "A formal review process shall be followed during the creation or update of the item definition.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.5.1"
+    },
+    {
+      "id": "ITEM_029",
+      "category": "Review and Approval",
+      "requirement": "Approval Documentation",
+      "description": "All necessary approvals for the item definition shall be documented.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.5.1"
+    },
+    {
+      "id": "ITEM_030",
+      "category": "Review and Approval",
+      "requirement": "Review Minutes and Action Items",
+      "description": "Review minutes and action items shall be recorded and closed.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.5.1"
+    },
+    {
+      "id": "ITEM_031",
+      "category": "Review and Approval",
+      "requirement": "Configuration Management Application",
+      "description": "Configuration management shall be applied to the item definition.",
+      "iso_clause": "ISO 26262-3:2018, Clause 5.5.1"
+    }
+  ]
+}

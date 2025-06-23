@@ -1,0 +1,125 @@
+Item Definition
+Windscreen Wiper System
+
+Document Information:
+Item Name: Windscreen Wiper System
+Item ID: WIPER_SYS_001
+Version: 1.0
+Date: April 5, 2025
+Prepared by: [Your Name / Team]
+Applicable ASIL: ASIL A (based on HARA)
+
+1. Purpose and Functionality
+
+The Windscreen Wiper System is designed to maintain driver visibility by periodically removing water, dirt, or other contaminants from the windscreen under various weather and driving conditions.
+
+Functional Description:
+- The system operates in the following modes:
+  - Off: No wiper movement.
+  - Intermittent: Wipers activate at set intervals (adjustable).
+  - Low Speed: Continuous wiping at a slower rate.
+  - High Speed: Continuous wiping at a faster rate.
+  - Single Wipe: One wipe cycle activated manually.
+  - Wash & Wipe: Activates washer fluid spray followed by wiper cycle(s).
+
+- Activation methods include:
+  - Manual activation via stalk control.
+  - Automatic activation via rain sensor input (if equipped).
+
+- The system deactivates upon ignition off or when the vehicle speed exceeds a defined threshold (e.g., >160 km/h), if applicable.
+
+2. Interfaces
+
+Internal Interfaces:
+- Stalk Control Input: Receives driver input for mode selection (off, intermittent, low/high speed, single wipe).
+- Rain Sensor Input: Optional input for automatic activation based on detected moisture.
+- Washer Fluid Pump: Activated during wash & wipe mode.
+- Motor Driver Output: Controls wiper motor speed and direction.
+- CAN Communication: For diagnostics, status reporting, and coordination with body control module.
+
+External Interfaces:
+- Driver (User): Interaction via wiper stalk and visual feedback through instrument cluster (if available).
+- Vehicle Electrical System: Powered via battery and ignition switch; protected by fuse/circuit breaker.
+- Windscreen Washer Reservoir: Supplies washer fluid to pump.
+- Body Control Module (BCM): Coordination of wiper operation with other systems (e.g., headlamps, washer fluid level monitoring).
+
+3. Environmental Conditions
+
+The Windscreen Wiper System shall function within the following environmental constraints:
+- Operating Temperature: -40°C to +85°C
+- Storage Temperature: -40°C to +105°C
+- Humidity: Up to 95% RH (non-condensing)
+- Vibration: Compliant with ISO 16750-3
+- Electromagnetic Compatibility (EMC): Compliant with ISO 11452 series
+- Dust/Water Ingress Protection: IP rating: IP54 (minimum) for external components
+
+4. Dependencies and Assumptions
+
+Dependencies:
+- Availability of electrical power from vehicle battery.
+- Proper operation of wiper stalk and rain sensor (if present).
+- Sufficient washer fluid level for wash & wipe functionality.
+
+Assumptions:
+- The driver will inspect and refill washer fluid as needed.
+- The wiper blades are maintained and replaced according to manufacturer recommendations.
+- The vehicle’s electrical system meets functional performance requirements.
+- The BCM does not send erroneous signals that could cause unintended operation.
+
+5. Operational Modes
+
+- Off: Wipers do not move.
+- Intermittent: Wipers operate at programmable intervals (e.g., every 1–10 seconds).
+- Low Speed: Continuous wiping at ~30 cycles per minute.
+- High Speed: Continuous wiping at ~60 cycles per minute.
+- Single Wipe: One wipe cycle initiated manually.
+- Wash & Wipe: Washer fluid sprayed, followed by wiper cycle(s).
+
+6. Safety-Related Attributes
+
+Identified Hazards (from HARA):
+- Unintended activation of wipers → Impairs driver visibility.
+- Failure to activate wipers → Impairs visibility during rain/snow.
+- Stuck wiper blade position → Blocks view completely.
+- Washer fluid leakage → Potential short circuit or corrosion.
+
+Derived Safety Goals (from HARA):
+SG1: The wiper system shall not activate unintentionally. (ASIL A)
+SG2: The wiper system shall activate when commanded. (ASIL A)
+SG3: The wiper system shall return to park position upon deactivation. (ASIL A)
+SG4: The washer fluid pump shall only activate during wash & wipe mode. (ASIL A)
+
+Safety Mechanisms (Preliminary):
+- Watchdog timer for microcontroller (if applicable).
+- Diagnostic checks for wiper motor current draw.
+- End-of-travel sensor or mechanical limit switch for park position.
+- CAN signal timeout detection for command validation.
+
+7. Constraints
+
+Hardware:
+- Must fit within existing mounting points on windshield assembly.
+
+Software:
+- If used, must comply with ISO 26262 Part 6.
+
+Regulatory:
+- Must comply with FMVSS 104 and ECE R75 (or equivalent regional standards).
+
+Design:
+- Shall not interfere with airbag deployment or driver visibility when in park position.
+
+8. Scope and Boundaries
+
+Scope:
+- This item definition includes the wiper motor, linkage mechanism, wiper blades, control stalk, washer pump, and associated wiring.
+- It also includes any embedded software responsible for control logic (if applicable).
+
+Exclusions:
+- Rain sensor hardware/software (if part of a separate item/system).
+- Body Control Module (BCM), though it may interact with this system.
+- Windshield washer reservoir (considered an external component).
+
+9. Additional Notes
+
+This document defines the scope, functionality, and context of the Windscreen Wiper System for use in the Concept Phase of development. It supports subsequent hazard analysis and risk assessment (HARA) and provides foundational information for deriving functional safety requirements.
