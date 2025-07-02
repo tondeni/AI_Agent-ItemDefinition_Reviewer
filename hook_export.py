@@ -59,35 +59,42 @@ def before_cat_sends_message(final_output, cat):
             checklist_item = checklist_map.get(item_id, {})
             category = checklist_item.get("category", "Uncategorized")
 
-            # Add category heading only when it changes
+        # Add category heading and explanation only when it changes
             if not hasattr(before_cat_sends_message, "last_category") or before_cat_sends_message.last_category != category:
                 doc.add_heading(category, level=2)
+                add_section_explanation(doc, category)  # <<< Insert explanation here
                 before_cat_sends_message.last_category = category
 
-            # Create a table for this item (5 rows x 2 columns)
+            # Create a table with 2 columns and N rows depending on content
             table = doc.add_table(rows=5, cols=2)
-            table.style = "Table Grid"  # Use built-in style for borders
+            table.style = 'Table Grid'
+            
+            # Set column widths: 1st column = 1.5 inches (narrow), 2nd column = 4.5 inches (wide)
+            for row in table.rows:
+                row.cells[0].width = Pt(2.5 * 1440 / 72)  # ~1.5 inches wide
+                row.cells[1].width = Pt(20.0 * 1440 / 72)  # ~10.5 inches wide
+            
+            # Set font size and bold headers
+            def set_cell_text(cell, text, bold=False):
+                paragraph = cell.paragraphs[0]
+                run = paragraph.add_run(text)
+                run.bold = bold
+                run.font.size = Pt(10)
 
-            # Fill table with item data
-            row_cells = table.rows[0].cells
-            row_cells[0].text = "Item"
-            row_cells[1].text = item_id
+            set_cell_text(table.rows[0].cells[0], "Requirement", bold=True)
+            set_cell_text(table.rows[0].cells[1], checklist_item.get("requirement", ""))
 
-            row_cells = table.add_row().cells
-            row_cells[0].text = "Requirement"
-            row_cells[1].text = checklist_item.get("requirement", item.get("Requirement", ""))
+            set_cell_text(table.rows[1].cells[0], "Description", bold=True)
+            set_cell_text(table.rows[1].cells[1], checklist_item.get("description", "N/A"))
 
-            row_cells = table.add_row().cells
-            row_cells[0].text = "ISO Clause"
-            row_cells[1].text = checklist_item.get("iso_clause", "N/A")
+            set_cell_text(table.rows[2].cells[0], "ISO Clause", bold=True)
+            set_cell_text(table.rows[2].cells[1], checklist_item.get("iso_clause", "N/A"))
 
-            row_cells = table.add_row().cells
-            row_cells[0].text = "Result"
-            row_cells[1].text = item.get("Status", "Not Reviewed")
+            set_cell_text(table.rows[3].cells[0], "Result", bold=True)
+            set_cell_text(table.rows[3].cells[1], item.get("Status", "Not Reviewed"))
 
-            row_cells = table.add_row().cells
-            row_cells[0].text = "Comment"
-            row_cells[1].text = item.get("Comment", "")
+            set_cell_text(table.rows[4].cells[0], "Comment", bold=True)
+            set_cell_text(table.rows[4].cells[1], item.get("Comment", ""))
 
             # Add paragraph after each table to separate items visually
             p = doc.add_paragraph()
@@ -104,7 +111,7 @@ def before_cat_sends_message(final_output, cat):
         # Step 4: Build CSV content
         csv_buffer = StringIO()
         csv_writer = csv.writer(csv_buffer, delimiter=";")
-        csv_writer.writerow(["ID", "Requirement", "Clause", "Status", "Comment"])
+        csv_writer.writerow(["ID", "Requirement", "Description", "Clause", "Status", "Comment"])
 
         # Populate CSV rows using both LLM output and checklist metadata
         for item in review_data:
@@ -116,8 +123,9 @@ def before_cat_sends_message(final_output, cat):
             checklist_item = checklist_map.get(item_id, {})
             full_requirement = checklist_item.get("requirement", req)
             iso_clause = checklist_item.get("iso_clause", "N/A")
+            description = checklist_item.get("description", "N/A")
 
-            csv_writer.writerow([item_id, full_requirement, iso_clause, status, comment])
+            csv_writer.writerow([item_id, full_requirement, description, iso_clause, status, comment])
 
         csv_content = csv_buffer.getvalue()
         csv_buffer.close()
@@ -247,3 +255,53 @@ def load_checklist(plugin_folder):
         raise FileNotFoundError(f"Checklist file not found at {checklist_path}")
     except json.JSONDecodeError as e:
         raise json.JSONDecodeError(f"Invalid JSON in checklist file: {e}", doc=e.doc, pos=e.pos)
+    
+# Helper Function: Add explanation text for each category
+def add_section_explanation(doc, category):
+    """
+    Adds a brief explanation paragraph after each category heading in the Word document.
+    """
+    explanations = {
+        "Identification and Classification": (
+            "This section ensures that the item is uniquely identified within the system architecture or documentation "
+            "and properly classified (e.g., as hardware, software, or a system function). This supports traceability from "
+            "high-level safety goals down to detailed design elements. Clear identification also enables effective configuration "
+            "management and version control throughout the development lifecycle. It is a foundational element for ensuring structured functional safety development."
+        ),
+        "Functional Description": (
+            "This section describes the expected behavior of the item under all operating conditions, including normal, degraded, "
+            "and fault modes. It includes definitions of interfaces, timing constraints, and performance requirements. A well-defined "
+            "functional description is essential for identifying potential failure scenarios and serves as input to hazard analysis. It helps "
+            "ensure that all relevant behaviors are considered when deriving safety requirements."
+        ),
+        "Safety-Related Attributes": (
+            "This section captures key safety-related properties such as safety goals, mitigation strategies, diagnostic coverage, "
+            "and safe state definitions. These attributes are derived from the Hazard Analysis and Risk Assessment (HARA) and form the basis "
+            "of the functional safety concept. They guide the implementation of safety mechanisms and define how the item contributes to overall "
+            "system safety. Proper documentation ensures alignment with ISO 26262 expectations for safety integrity."
+        ),
+        "Dependencies and Interactions": (
+            "This section identifies internal and external dependencies, including interactions with other systems, environmental influences, "
+            "and user inputs. Understanding these relationships is critical for defining correct assumptions and boundary conditions during development. "
+            "It also supports the identification of potential interference or integration risks that could impact safety. Accurate documentation ensures robust "
+            "interface management and system integration."
+        ),
+        "System Boundaries and Context": (
+            "This section defines the physical and logical boundaries of the item, along with environmental conditions and design constraints. "
+            "It clarifies where the item operates and under what limitations, such as temperature, vibration, or EMC exposure. These details ensure that "
+            "the item is developed and validated under realistic assumptions. Defining this context early supports the creation of accurate test plans and operational profiles."
+        ),
+        "Review and Approval": (
+            "This section confirms that a formal review process was followed and that all necessary approvals were obtained before finalizing the item definition. "
+            "It verifies that review minutes, action items, and change records are documented and closed. Configuration management practices should also be applied to maintain "
+            "document integrity. This ensures process compliance and provides an auditable trail for quality assurance and functional safety governance."
+        )
+    }
+
+    explanation = explanations.get(category)
+    if explanation:
+        paragraph = doc.add_paragraph(explanation)
+        paragraph.style = 'Normal'
+        paragraph.alignment = 0  # Left-aligned
+        paragraph.paragraph_format.space_after = Pt(12)
+        paragraph.paragraph_format.line_spacing = 1.2

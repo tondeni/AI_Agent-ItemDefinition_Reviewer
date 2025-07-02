@@ -6,22 +6,16 @@ import json
 # Tool: Trigger the review process
 @tool(return_direct=True)
 def review_item_definition(tool_input, cat):
-    """
-    Reviews an Item Definition document using the ISO 26262 Part 3 checklist.
-    
-    This tool performs the following:
-        - Loads a structured compliance checklist from JSON
-        - Loads the item definition text file
-        - Constructs a prompt for the LLM to analyze compliance
-        - Sends the prompt to the LLM and returns the result directly to the user
+    """Review the current item definition against ISO 26262 compliance checklist.
+    This tool loads the item definition from the plugin folder and provides
+    assessment results with specific suggestions for improvement.
     
     Args:
-        tool_input (str): Input from the user (unused in this implementation)
-        cat (Cat): Cheshire Cat instance, used to access memory and call the LLM
-
+        tool_input: Input from the user (not used in this tool)
+        cat: Cheshire Cat instance
+    
     Returns:
-        str: LLM-generated table with compliance review results
-             Includes: ID, Requirement, Status, Comment
+        Assessment results with compliance score and improvement suggestions
     """
 
     # Print confirmation that the tool was triggered
@@ -51,12 +45,13 @@ Here is the actual Item Definition content:
 For each checklist item, determine if it was met. Output the results in a markdown-style table format with columns:
 - ID
 - Requirement
+- Description
 - Status (Pass / Fail / Not Applicable)
 - Comment
 
 Be specific about what evidence supports your conclusion — refer to sections or descriptions in the Item Definition.
 
-Return only the table — no extra explanation needed.
+
 """
 
     # Step 4: Send prompt to LLM
