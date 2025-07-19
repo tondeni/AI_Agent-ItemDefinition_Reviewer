@@ -35,7 +35,10 @@ def before_cat_sends_message(final_output, cat):
     """
 
     # Only process if the output contains a markdown-style table (i.e., has '|')
-    if "|" in final_output.get("content", ""):
+    # AND it's not from the batch processing tool (which handles its own ZIP creation)
+    content = final_output.get("content", "")
+    is_batch_processing = getattr(cat, '_batch_processing', False)
+    if "|" in content and not is_batch_processing and not ("Successfully processed" in content and "ZIP files saved in:" in content):
         print("📦 Packaging .docx and .csv into .zip...")
 
         # Get current plugin folder path
