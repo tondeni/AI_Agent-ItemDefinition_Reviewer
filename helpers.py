@@ -131,6 +131,7 @@ def add_item_to_doc(doc, item_block):
         - ISO Clause reference
         - Review status (Pass / Fail / Partially Pass)
         - Comment or justification
+        - Suggestion
 
     Args:
         doc (Document): python-docx Document object where the table will be added.
@@ -140,6 +141,7 @@ def add_item_to_doc(doc, item_block):
             - "Clause" (str): Reference to ISO 26262 clause
             - "Status" (str): Result of review (e.g., Pass, Fail)
             - "Comment" (str): Justification or evidence
+            - "Suggestion" (str): Hints or suggestion to improve Item Definition section
 
     Returns:
         None: Modifies the document in-place
@@ -171,6 +173,10 @@ def add_item_to_doc(doc, item_block):
     # Row 4: Comment or justification
     table.rows[4].cells[0].text = "Comment"
     table.rows[4].cells[1].text = item_block["Comment"]
+
+    # Row 5: Suggestions for improvement
+    table.rows[5].cells[0].text = "Suggestion"
+    table.rows[5].cells[1].text = item_block["Suggestion"]
 
     # Add an empty paragraph after the table to separate items visually
     p = doc.add_paragraph()

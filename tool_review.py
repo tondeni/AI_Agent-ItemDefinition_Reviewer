@@ -48,6 +48,8 @@ For each checklist item, determine if it was met. Output the results in a markdo
 - Description
 - Status (Pass / Fail / Not Applicable)
 - Comment
+- Hint for improvement
+
 
 Be specific about what evidence supports your conclusion — refer to sections or descriptions in the Item Definition.
 
