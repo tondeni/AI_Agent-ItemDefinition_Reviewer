@@ -9,7 +9,8 @@ import re
 import json
 from datetime import datetime
 from docx.enum.style import WD_STYLE_TYPE
-from docx.shared import Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt, RGBColor
 from docx.shared import Inches
 
 # Hook: Export LLM output to .docx, .csv and package into .zip
@@ -34,13 +35,9 @@ def before_cat_sends_message(final_output, cat):
     Returns:
         dict: Updated final_output with downloadable ZIP file attached.
     """
-
   
     # Only process if the output contains a markdown-style table (i.e., has '|')
-    # AND it's not from the batch processing tool (which handles its own ZIP creation)
-    content = final_output.get("content", "")
-    is_batch_processing = getattr(cat, '_batch_processing', False)
-    if "|" in content and not is_batch_processing and not ("Successfully processed" in content and "ZIP files saved in:" in content):
+    if "|" in final_output.get("content", ""):
         print("📦 Packaging .docx and .csv into .zip...")
 
         # Get current plugin folder path
@@ -78,6 +75,7 @@ def before_cat_sends_message(final_output, cat):
         # === RIGHT CELL: Title and subtitle ===
         title_paragraph = cell_title.paragraphs[0]
         title_run = title_paragraph.add_run("ISO 26262 Safety Compliance Review\nItem Definition Checklist Review")
+        title_run.alignment = 1 
         title_run.font.size = Pt(12)
         title_run.bold = True
 
@@ -93,7 +91,10 @@ def before_cat_sends_message(final_output, cat):
         run.italic = True
 
         # === FIRST PAGE ===
-        doc.add_heading('ISO 26262 Part 3 - Item Definition Review Report', level=1)
+        # === FIRST PAGE ===
+        heading = doc.add_heading('ISO 26262 Part 3 - Item Definition Review Report', level=1)
+        heading.alignment = WD_ALIGN_PARAGRAPH.CENTER  # This centers the heading
+        
         doc.add_paragraph("Item Definition Checklist Review", style="CustomTitle")
         doc.add_paragraph(f"Item: [ADD ITEM NAME HERE]", style="CustomSubtitle")
         doc.add_paragraph()  # Spacing
@@ -211,23 +212,6 @@ def before_cat_sends_message(final_output, cat):
             f.write(base64.b64decode(encoded_zip))
 
         print(f"💾 ZIP file saved at: {zip_path}")
-
-        # # final_output["content"]= review_data
-
-        # # Step 7: Attach ZIP file to chat response for download
-        # final_output["file"] = {
-        #     "name": f"item_definition_review_{timestamp}.zip",
-        #     "content": encoded_zip,
-        #     "type": "zip"
-        # }
-
-        # # Optional: Update chat message to confirm export
-        # final_output["content"] = (
-        #     "✅ Review completed and exported.\n"
-        #     "See attached `.zip` file containing:\n"
-        #     "- `item_definition_review.docx`\n"
-        #     "- `item_definition_review.csv`"
-        # )
 
         # Build a human-readable summary of the checklist review
         summary_lines = [
@@ -369,17 +353,19 @@ def create_custom_styles(doc):
     # Title style
     title_style = doc.styles.add_style("CustomTitle", WD_STYLE_TYPE.PARAGRAPH)
     title_style.base_style = doc.styles["Normal"]
-    title_style.font.name = "QuickSand"
+    title_style.font.name = "Calibri"
     title_style.font.size = Pt(24)
     title_style.font.bold = True
+    title_style.font.color.rgb = RGBColor(54, 95, 145)  #365F91
     title_style.paragraph_format.alignment = 1  # Centered
-    title_style.paragraph_format.space_after = Pt(12)
+    title_style.paragraph_format.space_after = Pt(12) 
 
     # Subtitle style
     subtitle_style = doc.styles.add_style("CustomSubtitle", WD_STYLE_TYPE.PARAGRAPH)
     subtitle_style.base_style = doc.styles["Normal"]
-    subtitle_style.font.name = "QuickSand"
-    subtitle_style.font.size = Pt(24)
+    subtitle_style.font.name = "Calibri"
+    subtitle_style.font.size = Pt(16)
+    subtitle_style.font.color.rgb = RGBColor(54, 95, 145)  #365F91
     subtitle_style.font.italic = True
-    title_style.paragraph_format.alignment = 1  # Centered
+    subtitle_style.paragraph_format.alignment = 1  # Centered
     subtitle_style.paragraph_format.space_after = Pt(12)

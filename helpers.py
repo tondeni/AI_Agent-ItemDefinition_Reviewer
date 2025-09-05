@@ -40,7 +40,6 @@ def load_item_definition(plugin_folder):
     with open(item_def_path, "r", encoding="utf-8") as f:
         return f.read()
 
-
 # Helper Function: Parse markdown-style tables from text
 def parse_markdown_table(text):
     """
@@ -92,7 +91,6 @@ def parse_markdown_table(text):
     # Return the list of parsed rows
     return parsed_data
 
-
 # Helper Function: Create a custom table style for Word documents
 def create_table_style(doc):
     """
@@ -119,11 +117,10 @@ def create_table_style(doc):
     # Return the new style so it can be applied to tables
     return table_style
 
-
 # Helper Function: Add a structured checklist item as a table to a Word document
 def add_item_to_doc(doc, item_block):
     """
-    Adds a 5-row table for a single checklist item into a Word document.
+    Adds a 6-row table for a single checklist item into a Word document.
     Each table represents one requirement from the ISO 26262 Part 3 checklist,
     and includes:
         - Item ID
