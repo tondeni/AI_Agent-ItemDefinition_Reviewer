@@ -52,39 +52,24 @@ def review_item_definition(tool_input, cat):
 
 # Helper Function: Generate individual review for a file
 def generate_individual_review(content, checklist, cat):
-    """
-    Generates a review for individual file content using the LLM.
     
-    Args:
-        content (str): File content to review
-        checklist (dict): Checklist data
-        cat: Cheshire Cat instance
+    item_def_content = content
+    checklist_rev = json.dumps(checklist, indent=2)
     
-    Returns:
-        str: LLM review response
-    """
-    prompt = f"""
-You are a Functional Safety expert reviewing an Item Definition according to ISO 26262 Part 3.
-
-Use the following checklist to evaluate the provided Item Definition:
-{json.dumps(checklist, indent=2)}
-
-Here is the actual Item Definition content:
-
-"{content}"
-
-For each checklist item, determine if it was met. Output the results in a markdown-style table format with columns:
-- ID
-- Requirement
-- Description
-- Status (Pass / Fail / Not Applicable)
-- Comment
-- Hint for improvement
+    prompt = f""" You are a Functional Safety expert reviewing an Item Definition according to ISO 26262 Part 3.
+Use the following checklist "{checklist_rev}" to evaluate the provided Item Definition "{item_def_content}".
+For each checklist item, determine if it was met or not
 
 
-Be specific about what evidence supports your conclusion — refer to sections or descriptions in the Item Definition.
-
-"""
+ Be specific about what evidence supports your conclusion — refer to sections or descriptions in the Item Definition.  
+  
+ For each checklist item, determine if it was met. Output the results by filling the following sections:
+ - ID
+ - Requirement
+ - Description
+ - Status (Pass / Fail / Not Applicable)
+ - Comment
+ - Hint for improvement """
     
     return cat.llm(prompt)
 
