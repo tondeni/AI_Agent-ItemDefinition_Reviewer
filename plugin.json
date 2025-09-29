@@ -2,6 +2,7 @@
   "name": "[Kineton] ISO 26262 Item Definition Reviewer",
   "version": "0.0.1",
   "description": "A plugin that enables AI agents to review an Item Definition on a ISO 26262 compliant checklist review or create a review report template",
+  "author_name": "Tonino De Nigris",
   "author_url": "https://github.com/tondeni",
   "plugin_url": "https://github.com/tondeni/AI_Agent-ItemDefinition_Reviewer",
   "tags": "ISO26262, FuSa, Functional Safety",
