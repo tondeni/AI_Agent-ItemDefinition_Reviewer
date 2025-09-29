@@ -12,6 +12,63 @@ from docx.enum.style import WD_STYLE_TYPE
 import PyPDF2
 import re
 
+
+@tool(return_direct=True)
+def generate_review_template(tool_input, cat):
+    """
+    Generate a blank ISO 26262 Item Definition Review template with all checklist items.
+    Creates both Word (.docx) and Excel (.xlsx) templates with empty status/comment/hint fields.
+    
+    Args:
+        tool_input: Not used
+        cat: Cheshire Cat instance
+    
+    Returns:
+        Template review content (formatter will create files)
+    """
+    
+    print("✅ TOOL CALLED: generate_review_template")
+    
+    # Load complete checklist structure
+    plugin_folder = os.path.dirname(__file__)
+    checklist = load_checklist(plugin_folder)
+    
+    # Create template entries for ALL checklist items with empty fields
+    template_reviews = []
+    
+    for item in checklist.get("items", []):
+        template_reviews.append({
+            'id': item['id'],
+            'category': item['category'],
+            'requirement': item['requirement'],
+            'description': item['description'],
+            'status': '',  # Empty - to be filled by reviewer
+            'comment': '',  # Empty - to be filled by reviewer
+            'hint_for_improvement': ''  # Empty - to be filled by reviewer
+        })
+    
+    # Format as the parser expects (markdown with **Field:** format)
+    template_content = "ISO 26262 Part 3 - Item Definition Review Template\n\n"
+    template_content += f"Total checklist items: {len(template_reviews)}\n\n"
+    
+    for review in template_reviews:
+        template_content += f"""**ID:** {review['id']}
+**Category:** {review['category']}
+**Requirement:** {review['requirement']}
+**Description:** {review['description']}
+**Status:** {review['status']}
+**Comment:** {review['comment']}
+**Hint for improvement:** {review['hint_for_improvement']}
+
+"""
+    
+    # Set working memory flags for formatter
+    cat.working_memory["document_type"] = "item_definition_review"
+    cat.working_memory["reviewed_item"] = "Template - Item Definition Review"
+    cat.working_memory["is_template"] = True
+    
+    return template_content
+
 # Tool: Trigger the review process
 @tool(return_direct=True)
 def review_item_definition(tool_input, cat):
