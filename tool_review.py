@@ -48,6 +48,8 @@ def review_item_definition(tool_input, cat):
     # Step 3: Build the prompt for the LLM
     response = generate_individual_review(item_definition, checklist, cat)
 
+    cat.working_memory["document_type"] = "item_definition_review"
+    cat.working_memory["reviewed_item"] = "item under review"  # e.g., "BMS"
     return response 
 
 # Helper Function: Generate individual review for a file
@@ -63,13 +65,16 @@ For each checklist item, determine if it was met or not
 
  Be specific about what evidence supports your conclusion — refer to sections or descriptions in the Item Definition.  
   
- For each checklist item, determine if it was met. Output the results by filling the following sections:
- - ID
- - Requirement
- - Description
- - Status (Pass / Fail / Not Applicable)
- - Comment
- - Hint for improvement """
+ For each checklist item, determine if it was met. Output the results by filling the following sections :
+**ID:** [ID]  
+**Category:** [Category Name]  
+**Requirement:** [Requirement text]  
+**Description:** [Description from checklist]  
+**Status:** Pass / Fail / Not Applicable  
+**Comment:** [Your assessment]  
+**Hint for improvement:** [Suggestion]
+
+After each of this sections, output your response in a way they are clearly divided by each other (e.g. inserting a blank line or a solid line between them)"""
     
     return cat.llm(prompt)
 
