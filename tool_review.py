@@ -1,151 +1,111 @@
-from cat.mad_hatter.decorators import tool
+# tool_review.py - Refined Item Definition Reviewer Tools
 import os
 import json
-import zipfile
-import csv
-from io import BytesIO, StringIO
 from datetime import datetime
-import base64
-from docx import Document as DocxDocument
-from docx.shared import Pt
-from docx.enum.style import WD_STYLE_TYPE
-import PyPDF2
-import re
+from cat.mad_hatter.decorators import tool
+from cat.log import log
+
+try:
+    from docx import Document as DocxDocument
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
+    log.warning("python-docx not available - DOCX reading disabled")
+
+try:
+    import PyPDF2
+    PDF_AVAILABLE = True
+except ImportError:
+    PDF_AVAILABLE = False
+    log.warning("PyPDF2 not available - PDF reading disabled")
 
 
-@tool(return_direct=True)
-def generate_review_template(tool_input, cat):
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+def load_checklist(plugin_folder):
     """
-    Generate a blank ISO 26262 Item Definition Review template with all checklist items.
-    Creates both Word (.docx) and Excel (.xlsx) templates with empty status/comment/hint fields.
+    Load ISO 26262 Part 3 compliance checklist from JSON.
     
     Args:
-        tool_input: Not used
-        cat: Cheshire Cat instance
-    
+        plugin_folder (str): Path to plugin root
+        
     Returns:
-        Template review content (formatter will create files)
+        dict: Checklist data
+        
+    Raises:
+        FileNotFoundError: If checklist file not found
     """
+    checklist_path = os.path.join(plugin_folder, "checklists", "item_definition_checklist.json")
     
-    print("✅ TOOL CALLED: generate_review_template")
-    
-    # Load complete checklist structure
-    plugin_folder = os.path.dirname(__file__)
-    checklist = load_checklist(plugin_folder)
-    
-    # Create template entries for ALL checklist items with empty fields
-    template_reviews = []
-    
-    for item in checklist.get("items", []):
-        template_reviews.append({
-            'id': item['id'],
-            'category': item['category'],
-            'requirement': item['requirement'],
-            'description': item['description'],
-            'status': '',  # Empty - to be filled by reviewer
-            'comment': '',  # Empty - to be filled by reviewer
-            'hint_for_improvement': ''  # Empty - to be filled by reviewer
-        })
-    
-    # Format as the parser expects (markdown with **Field:** format)
-    template_content = "ISO 26262 Part 3 - Item Definition Review Template\n\n"
-    template_content += f"Total checklist items: {len(template_reviews)}\n\n"
-    
-    for review in template_reviews:
-        template_content += f"""**ID:** {review['id']}
-**Category:** {review['category']}
-**Requirement:** {review['requirement']}
-**Description:** {review['description']}
-**Status:** {review['status']}
-**Comment:** {review['comment']}
-**Hint for improvement:** {review['hint_for_improvement']}
+    try:
+        with open(checklist_path, "r", encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        log.error(f"Checklist not found: {checklist_path}")
+        raise FileNotFoundError(f"Checklist file not found at {checklist_path}")
+    except json.JSONDecodeError as e:
+        log.error(f"Invalid checklist JSON: {e}")
+        raise ValueError(f"Checklist file is corrupted: {e}")
 
-"""
-    
-    # Set working memory flags for formatter
-    cat.working_memory["document_type"] = "item_definition_review"
-    cat.working_memory["reviewed_item"] = "Template - Item Definition Review"
-    cat.working_memory["is_template"] = True
-    
-    return template_content
 
-# Tool: Trigger the review process
-@tool(return_direct=True)
-def review_item_definition(tool_input, cat):
-    """Review the current item definition against ISO 26262 compliance checklist.
-    This tool loads the item definition from the plugin folder and provides
-    assessment results with specific suggestions for improvement.
+def load_item_definition(plugin_folder):
+    """
+    Load Item Definition from file in item_definition_to_review folder.
+    Supports .pdf, .docx, .txt formats.
     
     Args:
-        tool_input: Input from the user (not used in this tool)
-        cat: Cheshire Cat instance
-    
+        plugin_folder (str): Path to plugin root
+        
     Returns:
-        Assessment results with compliance score and improvement suggestions
+        str: Item definition content or None if not found
     """
-
-    # Print confirmation that the tool was triggered
-    print("✅ TOOL CALLED: review_item_definition")
- 
-    # Get the plugin's root folder path
-    plugin_folder = os.path.dirname(__file__)
-    item_definitions_folder = os.path.join(plugin_folder, "item_definition_to_review")
+    item_def_folder = os.path.join(plugin_folder, "item_definition_to_review")
     
-    # Check if item_definitions folder exists
-    if not os.path.exists(item_definitions_folder):
-        return "❌ Error: item_definition_to_review folder not found."
+    if not os.path.exists(item_def_folder):
+        log.error(f"Folder not found: {item_def_folder}")
+        return None
     
-    # Step 1: Load checklist from JSON file
-    # This contains all ISO 26262 Part 3 requirements as structured data
-    checklist = load_checklist(plugin_folder)
-
-    # Step 2: Load the actual Item Definition content from .txt file
-    item_definition = load_item_definition(plugin_folder)
+    supported_extensions = {'.pdf', '.docx', '.txt'}
     
-    # Step 3: Build the prompt for the LLM
-    response = generate_individual_review(item_definition, checklist, cat)
-
-    cat.working_memory["document_type"] = "item_definition_review"
-    cat.working_memory["reviewed_item"] = "item under review"  # e.g., "BMS"
-    return response 
-
-# Helper Function: Generate individual review for a file
-def generate_individual_review(content, checklist, cat):
+    # Find first supported file
+    for filename in os.listdir(item_def_folder):
+        file_path = os.path.join(item_def_folder, filename)
+        
+        if not os.path.isfile(file_path):
+            continue
+        
+        _, ext = os.path.splitext(filename.lower())
+        
+        if ext not in supported_extensions:
+            continue
+        
+        log.info(f"📄 Found file: {filename}")
+        
+        # Extract content based on type
+        content = extract_file_content(file_path, ext)
+        
+        if content and content.strip():
+            log.info(f"✅ Extracted {len(content)} characters from {filename}")
+            return content
+        else:
+            log.warning(f"⚠️ File {filename} appears empty or unreadable")
     
-    item_def_content = content
-    checklist_rev = json.dumps(checklist, indent=2)
-    
-    prompt = f""" You are a Functional Safety expert reviewing an Item Definition according to ISO 26262 Part 3.
-Use the following checklist "{checklist_rev}" to evaluate the provided Item Definition "{item_def_content}".
-For each checklist item, determine if it was met or not
+    log.warning("No valid Item Definition files found")
+    return None
 
 
- Be specific about what evidence supports your conclusion — refer to sections or descriptions in the Item Definition.  
-  
- For each checklist item, determine if it was met. Output the results by filling the following sections :
-**ID:** [ID]  
-**Category:** [Category Name]  
-**Requirement:** [Requirement text]  
-**Description:** [Description from checklist]  
-**Status:** Pass / Fail / Not Applicable  
-**Comment:** [Your assessment]  
-**Hint for improvement:** [Suggestion]
-
-After each of this sections, output your response in a way they are clearly divided by each other (e.g. inserting a blank line or a solid line between them)"""
-    
-    return cat.llm(prompt)
-
-# Helper Function: Extract content from different file types
 def extract_file_content(file_path, file_extension):
     """
-    Extracts text content from different file formats.
+    Extract text content from different file formats.
     
     Args:
-        file_path (str): Path to the file
-        file_extension (str): File extension (.pdf, .docx, .txt)
-    
+        file_path (str): Path to file
+        file_extension (str): Extension (.pdf, .docx, .txt)
+        
     Returns:
-        str: Extracted text content
+        str: Extracted text or empty string on error
     """
     try:
         if file_extension == '.txt':
@@ -153,102 +113,346 @@ def extract_file_content(file_path, file_extension):
                 return f.read()
         
         elif file_extension == '.pdf':
-            content = ""
+            if not PDF_AVAILABLE:
+                log.error("PyPDF2 not installed - cannot read PDF")
+                return ""
+            
+            content = []
             with open(file_path, 'rb') as f:
                 pdf_reader = PyPDF2.PdfReader(f)
-                for page in pdf_reader.pages:
-                    content += page.extract_text() + "\n"
-            return content
+                for page_num, page in enumerate(pdf_reader.pages):
+                    try:
+                        text = page.extract_text()
+                        if text:
+                            content.append(text)
+                    except Exception as e:
+                        log.warning(f"Failed to extract page {page_num}: {e}")
+            
+            return "\n".join(content)
         
         elif file_extension == '.docx':
+            if not DOCX_AVAILABLE:
+                log.error("python-docx not installed - cannot read DOCX")
+                return ""
+            
             doc = DocxDocument(file_path)
-            content = ""
+            content = []
+            
             for paragraph in doc.paragraphs:
-                content += paragraph.text + "\n"
-            return content
+                if paragraph.text.strip():
+                    content.append(paragraph.text)
+            
+            # Also extract from tables
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        if cell.text.strip():
+                            content.append(cell.text)
+            
+            return "\n".join(content)
         
         else:
+            log.warning(f"Unsupported file extension: {file_extension}")
             return ""
     
     except Exception as e:
-        print(f"Error extracting content from {file_path}: {str(e)}")
+        log.error(f"Error extracting content from {file_path}: {e}")
         return ""
 
-# Helper Function: Load checklist from JSON file
-def load_checklist(plugin_folder):
+
+def format_checklist_for_llm(checklist):
     """
-    Loads the ISO 26262 Part 3 compliance checklist from a JSON file.
-    This function constructs the path to the checklist file based on the plugin folder,
-    then reads and parses the JSON content for use in the AI-based review process.
-
+    Format checklist in a clear, structured way for LLM processing.
+    
     Args:
-        plugin_folder (str): The file system path to the root of the plugin folder.
-
-    Returns:
-        dict: A dictionary representing the parsed JSON checklist data.
+        checklist (dict): Checklist data
         
-    Raises:
-        FileNotFoundError: If the checklist file is not found at the expected location.
-    """
-
-    # Construct the full path to the checklist JSON file
-    checklist_path = os.path.join(plugin_folder, "checklists", "item_definition_checklist.json")
-
-    try:
-        # Open the JSON file in read mode
-        with open(checklist_path, "r") as f:
-            # Load and return the JSON data as a Python dictionary
-            return json.load(f)
-    
-    except FileNotFoundError:
-        # If the file doesn't exist, raise a descriptive error
-        raise FileNotFoundError(f"Checklist file not found at {checklist_path}")
-
-# Helper Function: Load Item Definition from text file
-def load_item_definition(plugin_folder):
-    """
-    Loads the content of the Item Definition document from a `.txt` file located in the plugin's 'item_definitions' directory.
-    This function reads and returns the full text content of the file, which can be used by the LLM to perform a compliance review.
-
-    Args:
-        plugin_folder (str): The file system path to the root of the plugin folder.
-
     Returns:
-        str: The full text content of the item definition document.
-
-    Raises:
-        FileNotFoundError: If the item_definition.txt file does not exist at the expected location.
+        str: Formatted checklist
     """
+    lines = ["# ISO 26262 Part 3 - Item Definition Review Checklist\n"]
+    
+    # Group items by category
+    items_by_category = {}
+    for item in checklist.get("items", []):
+        category = item.get("category", "Other")
+        if category not in items_by_category:
+            items_by_category[category] = []
+        items_by_category[category].append(item)
+    
+    # Format by category
+    for category, items in items_by_category.items():
+        lines.append(f"\n## {category}\n")
+        for item in items:
+            lines.append(f"**{item['id']}** - {item['requirement']}")
+            lines.append(f"  Description: {item['description']}")
+            lines.append(f"  Reference: {item.get('iso_clause', 'N/A')}")
+            lines.append("")
+    
+    return "\n".join(lines)
 
-    # Get the plugin's root folder path
+
+def build_review_prompt(item_definition, checklist):
+    """
+    Build structured LLM prompt for item definition review.
+    
+    Args:
+        item_definition (str): Item definition content
+        checklist (dict): Review checklist
+        
+    Returns:
+        str: Formatted prompt
+    """
+    checklist_formatted = format_checklist_for_llm(checklist)
+    
+    # Truncate item definition if too long
+    max_length = 12000
+    item_def_truncated = item_definition[:max_length]
+    if len(item_definition) > max_length:
+        item_def_truncated += "\n\n[... content truncated ...]"
+    
+    prompt = f"""You are a Functional Safety expert conducting an ISO 26262 Part 3 Item Definition review.
+
+# Item Definition Content
+
+{item_def_truncated}
+
+---
+
+# Review Checklist
+
+{checklist_formatted}
+
+---
+
+# Your Task
+
+Review the Item Definition against each checklist item. For each item:
+
+1. **Carefully read** the requirement and description
+2. **Search** for evidence in the Item Definition
+3. **Assess** whether the requirement is satisfied
+4. **Provide specific evidence** - cite sections, headings, or content
+5. **Offer actionable improvements** for failed items
+
+# Output Format
+
+For each checklist item, provide your assessment in this exact format:
+
+**ID:** [Checklist ID]
+**Category:** [Category Name]
+**Requirement:** [Requirement text]
+**Description:** [Description from checklist]
+**Status:** Pass / Fail / Not Applicable
+**Comment:** [Your detailed assessment with specific evidence from the document]
+**Hint for improvement:** [Actionable suggestion if Fail, or "N/A" if Pass]
+
+---
+
+# Review Criteria
+
+- **Pass**: Requirement fully met with clear evidence in the document
+- **Fail**: Requirement not met, unclear, or insufficient evidence
+- **Not Applicable**: Requirement does not apply to this item
+
+# Quality Guidelines
+
+✅ **DO:**
+- Quote specific sections or headings as evidence
+- Explain WHY something passes or fails
+- Provide constructive, actionable improvement hints
+- Check for completeness, clarity, and compliance
+
+❌ **DON'T:**
+- Give vague assessments without evidence
+- Mark as Pass without citing where requirement is met
+- Use "Not Applicable" without justification
+- Provide generic or unhelpful improvement hints
+
+---
+
+**Begin your review now. Assess ALL checklist items.**
+"""
+    
+    return prompt
+
+
+# ============================================================================
+# TOOLS
+# ============================================================================
+
+@tool(
+    return_direct=True,
+    examples=[
+        "review the item definition",
+        "check item definition compliance",
+        "review item definition with checklist"
+    ]
+)
+def review_item_definition(tool_input, cat):
+    """Review Item Definition against ISO 26262 Part 3 compliance checklist.
+    Input: not required (loads from item_definition_to_review folder).
+    Returns detailed assessment with Pass/Fail status and improvement hints."""
+    
+    log.info("🔧 TOOL CALLED: review_item_definition")
+    
     plugin_folder = os.path.dirname(__file__)
-    item_definitions_folder = os.path.join(plugin_folder, "item_definition_to_review")
     
-    # Check if item_definitions folder exists
-    if not os.path.exists(item_definitions_folder):
-        return "❌ Error: item_definitions folder not found."
-    
-    # Find all supported files in the folder
-    supported_extensions = ['.pdf', '.docx', '.txt']
-    files_to_process = "False"
+    # Step 1: Load checklist
+    try:
+        checklist = load_checklist(plugin_folder)
+        log.info(f"✅ Loaded checklist with {len(checklist.get('items', []))} items")
+    except FileNotFoundError:
+        return """❌ **Checklist Not Found**
 
-    for filename in os.listdir(item_definitions_folder):
-        file_path = os.path.join(item_definitions_folder, filename)
-        if os.path.isfile(file_path):
-            _, ext = os.path.splitext(filename.lower())
-            if ext in supported_extensions:
-                files_to_process = "True"
-    
-    if not files_to_process:
-        return "❌ No supported files found in item_definitions folder. Supported formats: .pdf, .docx, .txt"
+The review checklist file is missing. Please check:
+1. File exists: `checklists/item_definition_checklist.json`
+2. Plugin is correctly installed
+3. File permissions are correct
 
-    print(f"📄 Processing file: {filename}")    
+Contact plugin maintainer if issue persists."""
+    except ValueError as e:
+        return f"""❌ **Checklist File Corrupted**
+
+The checklist JSON file is invalid: {e}
+
+Please reinstall the plugin or repair the checklist file."""
     
-    # Extract content based on file type
-    content = extract_file_content(file_path, ext)
-    print(f"📝 Extracted {len(content)} characters from {filename}")    
-    if not content.strip():
-        print(f"⚠️ Warning: {filename} appears to be empty or unreadable")
-       
-   
-    return content
+    # Step 2: Load Item Definition
+    item_definition = load_item_definition(plugin_folder)
+    
+    if not item_definition:
+        return """❌ **No Item Definition Found**
+
+Please place your Item Definition file in the `item_definition_to_review/` folder.
+
+**Supported formats:**
+- `.txt` - Plain text
+- `.pdf` - PDF document
+- `.docx` - Word document
+
+**Requirements:**
+- Only one file should be in the folder
+- File must contain the complete Item Definition
+- File must be readable (not password-protected)
+
+**Try again after adding your file.**"""
+    
+    log.info(f"✅ Loaded Item Definition: {len(item_definition)} characters")
+    
+    # Step 3: Generate review
+    try:
+        prompt = build_review_prompt(item_definition, checklist)
+        log.info("🤖 Generating review with LLM...")
+        
+        response = cat.llm(prompt)
+        log.info(f"✅ Review generated: {len(response)} characters")
+        
+        # Set working memory for formatter plugin
+        cat.working_memory["document_type"] = "item_definition_review"
+        cat.working_memory["reviewed_item"] = "Item Definition"
+        cat.working_memory["review_date"] = datetime.now().strftime('%Y-%m-%d')
+        
+        return response
+        
+    except Exception as e:
+        log.error(f"LLM review generation failed: {e}")
+        return f"""❌ **Review Generation Failed**
+
+An error occurred while generating the review: {e}
+
+**Possible causes:**
+- LLM service unavailable
+- Item Definition too large
+- Invalid checklist format
+
+**Recommendations:**
+1. Try again in a few moments
+2. Check if Item Definition is too large (>50 pages)
+3. Verify LLM connection in Cheshire Cat settings"""
+
+
+@tool(
+    return_direct=True,
+    examples=[
+        "generate review template",
+        "create item definition review template",
+        "make blank review checklist"
+    ]
+)
+def get_review_template(tool_input, cat):
+    """Generate blank ISO 26262 Item Definition review template.
+    Input: not required.
+    Returns template with all checklist items and empty assessment fields."""
+    
+    log.info("🔧 TOOL CALLED: get_review_template")
+    
+    plugin_folder = os.path.dirname(__file__)
+    
+    # Load checklist
+    try:
+        checklist = load_checklist(plugin_folder)
+        log.info(f"✅ Loaded checklist with {len(checklist.get('items', []))} items")
+    except FileNotFoundError:
+        return """❌ **Checklist Not Found**
+
+Cannot generate template - checklist file is missing.
+Please check plugin installation."""
+    except ValueError as e:
+        return f"""❌ **Checklist File Corrupted**
+
+Cannot generate template - checklist is invalid: {e}"""
+    
+    # Build template content
+    items = checklist.get("items", [])
+    
+    template_lines = [
+        "# ISO 26262 Part 3 - Item Definition Review Template",
+        f"*Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
+        f"*Total Checklist Items: {len(items)}*",
+        "",
+        "**Instructions:**",
+        "- Fill in Status: Pass / Fail / Not Applicable",
+        "- Provide detailed Comment with evidence",
+        "- Add Hint for improvement for failed items",
+        "",
+        "---",
+        ""
+    ]
+    
+    # Add all checklist items with empty fields
+    for item in items:
+        template_lines.extend([
+            f"**ID:** {item['id']}",
+            f"**Category:** {item['category']}",
+            f"**Requirement:** {item['requirement']}",
+            f"**Description:** {item['description']}",
+            f"**ISO Clause:** {item.get('iso_clause', 'N/A')}",
+            "**Status:** ",
+            "**Comment:** ",
+            "**Hint for improvement:** ",
+            "",
+            "---",
+            ""
+        ])
+    
+    template_content = "\n".join(template_lines)
+    
+    # Set working memory for formatter
+    cat.working_memory["document_type"] = "item_definition_review"
+    cat.working_memory["reviewed_item"] = "Template - Item Definition Review"
+    cat.working_memory["is_template"] = True
+    cat.working_memory["review_date"] = datetime.now().strftime('%Y-%m-%d')
+    
+    log.info(f"✅ Template generated: {len(template_content)} characters")
+    
+    return template_content
+
+
+# ============================================================================
+# LEGACY COMPATIBILITY (optional - keep old names as aliases)
+# ============================================================================
+
+# Uncomment if you want to maintain backward compatibility
+# review_item_definition_old = review_item_definition
+# generate_review_template = get_review_template
